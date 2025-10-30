@@ -58,15 +58,15 @@ const Plogo = styled.img`
   width: 200px;
   height: auto;
   position: absolute;
-  top: -0.5px; /* metade do tamanho da imagem para "encaixar" */
+  top: -0.5px;
   left: 50%;
   transform: translateX(-50%);
-  background: white; /* opcional para não ver a borda por trás */
-  padding: 5px; /* opcional */
-  border-radius: 8px; /* opcional */
+  background: white;
+  padding: 5px;
+  border-radius: 8px;
 `;
 
-export default function Login({ titulo }) {
+export default function Login() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [error, setError] = useState("");
@@ -80,24 +80,28 @@ export default function Login({ titulo }) {
     setError("");
 
     try {
-      const resposta = await fetch("http://localhost:3000/usuarios/login", {
+      const resposta = await fetch("http://localhost:3001/usuarios/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, senha }),
       });
+
       const data = await resposta.json();
 
       if (resposta.ok) {
         alert("Login bem-sucedido");
         console.log("Dados da API", data);
+        localStorage.setItem("user_id", data.usuario.id);
+        localStorage.setItem("user_nome", data.usuario.nome);
+        localStorage.setItem("user_email", data.usuario.email);
         navigate("/dashboard");
       } else {
-        setError(data.message || "Erro ao fazer o Login. Tente novamente");
+        setError(data.erro || "Erro ao fazer o Login. Tente novamente");
       }
     } catch (erro) {
-      console.log("Falha ao conectar a API", erro);
+      console.error("Falha ao conectar à API:", erro);
       setError("Não foi possível conectar ao servidor. Verifique sua conexão");
     } finally {
       setLoading(false);
@@ -115,6 +119,7 @@ export default function Login({ titulo }) {
             <Fonte>
               <h1>Login</h1>
             </Fonte>
+
             <form onSubmit={executaSubmit}>
               <div className="mb-3">
                 <Fonte>
@@ -130,6 +135,7 @@ export default function Login({ titulo }) {
                   placeholder="Insira seu e-mail"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  required
                 />
               </div>
 
@@ -150,11 +156,13 @@ export default function Login({ titulo }) {
                   required
                 />
               </div>
+
               {error && (
                 <div className="alert alert-danger" role="alert">
                   {error}
                 </div>
               )}
+
               <BotaoAzul type="submit" disabled={loading}>
                 {loading ? "Entrando..." : "Login"}
               </BotaoAzul>

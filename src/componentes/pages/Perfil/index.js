@@ -1,7 +1,9 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import styled from "styled-components";
 import { FaBell } from "react-icons/fa";
-import Imagem from "./img/logo.png";
+import { useNavigate, Link } from "react-router-dom";
+import Imagem from "../../../Img/logoheader.png";
+import PerfilImg from "../../../Img/logo.png"; // imagem padrão do perfil
 
 const Header = styled.div`
   display: flex;
@@ -19,28 +21,126 @@ const Header = styled.div`
   z-index: 10;
 `;
 
-const Fonte = styled.span`
-  font-size: 16px;
-  font-weight: 500;
-  color: #333;
-  cursor: pointer;
-  &:hover {
-    color: #4b2995;
-  }
-`;
-
 const ImageAju = styled.img`
-  height: 40px;
-  cursor: pointer;
+  width: 150px;
+  height: 25px;
 `;
 
 const Imagemnike = styled.img`
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  object-fit: cover;
+  width: 35px;
+  height: 35px;
+  border-radius: 80px;
   cursor: pointer;
 `;
+
+const Fonte = styled.div`
+  color: #000000;
+  font-weight: 600;
+  font-size: 18px;
+  margin: 0;
+`;
+
+const NotifPopup = styled.div`
+  position: absolute;
+  top: 50px;
+  right: 0;
+  width: 300px;
+  background: #fff;
+  border: 2px solid #a794cf;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  padding: 15px;
+  z-index: 999;
+`;
+
+const NotifItem = styled.div`
+  background: #f4f2ff;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #333;
+`;
+
+const NotifTitulo = styled.h5`
+  font-size: 15px;
+  margin: 0 0 5px 0;
+  color: #4b2995;
+`;
+
+const Badge = styled.span`
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #4b2995;
+  color: #fff;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 50%;
+`;
+
+const Notificacoes = () => {
+  const [notificacoes, setNotificacoes] = useState([]);
+  const [notifAberta, setNotifAberta] = useState(false);
+  const [erroNotif, setErroNotif] = useState(null);
+  const popupRef = useRef(null);
+
+  const toggleNotificacoes = () => setNotifAberta(!notifAberta);
+
+  useEffect(() => {
+    const handleClickFora = (e) => {
+      if (popupRef.current && !popupRef.current.contains(e.target)) {
+        setNotifAberta(false);
+      }
+    };
+    document.addEventListener("click", handleClickFora);
+    return () => document.removeEventListener("click", handleClickFora);
+  }, []);
+
+  useEffect(() => {
+    if (notifAberta) {
+      fetch("http://localhost:3000/notificacoes")
+        .then((res) => {
+          if (!res.ok) throw new Error("Erro ao buscar notificações");
+          return res.json();
+        })
+        .then((data) => setNotificacoes(data))
+        .catch((err) => setErroNotif(err.message));
+    }
+  }, [notifAberta]);
+
+  return (
+    <div ref={popupRef} style={{ position: "relative" }}>
+      <div style={{ position: "relative" }}>
+        <FaBell
+          onClick={toggleNotificacoes}
+          style={{ fontSize: "20px", color: "#4B2995", cursor: "pointer" }}
+        />
+        {notificacoes.length > 0 && <Badge>{notificacoes.length}</Badge>}
+      </div>
+
+      {notifAberta && (
+        <NotifPopup>
+          <h5 style={{ marginBottom: "10px", color: "#4B2995" }}>
+            Notificações
+          </h5>
+          {erroNotif ? (
+            <p style={{ color: "red" }}>{erroNotif}</p>
+          ) : notificacoes.length === 0 ? (
+            <p>Nenhuma notificação.</p>
+          ) : (
+            notificacoes.map((n) => (
+              <NotifItem key={n.id}>
+                <NotifTitulo>{n.titulo}</NotifTitulo>
+                <div>{n.mensagem}</div>
+              </NotifItem>
+            ))
+          )}
+        </NotifPopup>
+      )}
+    </div>
+  );
+};
 
 const UploadBox = styled.div`
   border: 4px solid #4b2995;
@@ -66,48 +166,107 @@ const UploadContent = styled.div`
 `;
 
 const Perfil = () => {
+  const navigate = useNavigate();
   const [nome, setNome] = useState("Guilherme Felix");
-  const [cargo, setCargo] = useState("guifelix12@outlook.com");
+  const [email, setEmail] = useState("guifelix12@outlook.com");
   const [descricao, setDescricao] = useState(
-    "Peril de Usuário Oficial - Nexum"
+    "Perfil de Usuário Oficial - Nexum"
   );
   const [pais, setPais] = useState("Brasil");
-  const [imagemPerfil, setImagemPerfil] = useState("");
+  const [imagemPerfil, setImagemPerfil] = useState(PerfilImg);
   const inputFileRef = useRef(null);
   const inputHabilidadeRef = useRef(null);
 
-  const alterarImagem = () => {
-    inputFileRef.current.click();
-  };
+  useEffect(() => {
+    const imagemSalva = localStorage.getItem("imagemPerfil");
+    if (imagemSalva) {
+      setImagemPerfil(imagemSalva);
+    }
+  }, []);
+
+  const alterarImagem = () => inputFileRef.current.click();
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file && file.type.startsWith("image/")) {
       const reader = new FileReader();
-      reader.onload = () => setImagemPerfil(reader.result);
+      reader.onload = () => {
+        setImagemPerfil(reader.result);
+        localStorage.setItem("imagemPerfil", reader.result);
+      };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleUploadClick = () => {
-    inputHabilidadeRef.current.click();
+  const handleUploadClick = () => inputHabilidadeRef.current.click();
+
+  const [meusServicos, setMeusServicos] = useState([]);
+  const userId = localStorage.getItem("user_id");
+
+  useEffect(() => {
+    if (!userId) return;
+
+    fetch(`http://localhost:3001/servicos/usuarioServicos/${userId}`)
+      .then((res) => res.json())
+      .then((data) => setMeusServicos(data))
+      .catch((err) => console.error("Erro ao buscar serviços:", err));
+  }, [userId]);
+
+  const handleEditar = (servico) => {
+    navigate(`/editarServico/${servico.id_servico}`);
   };
 
+  const handleExcluir = async (id) => {
+    if (!window.confirm("Deseja realmente excluir este serviço?")) return;
+
+    try {
+      const resposta = await fetch(
+        `http://localhost:3001/servicos/apagarServico/${id}`,
+        {
+          method: "DELETE",
+        }
+      );
+      if (resposta.ok) {
+        setMeusServicos((prev) => prev.filter((s) => s.id_servico !== id));
+        alert("Serviço excluído com sucesso!");
+      } else {
+        alert("Erro ao excluir serviço.");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    const nomeSalvo = localStorage.getItem("user_nome");
+    const emailSalvo = localStorage.getItem("user_email");
+
+    if (nomeSalvo) setNome(nomeSalvo);
+    if (emailSalvo) setEmail(emailSalvo);
+  }, []);
+
   return (
-    <div
-      style={{
-        fontFamily: "Arial, sans-serif",
-        maxWidth: 720,
-        margin: "90px auto 20px",
-        padding: 20,
-        backgroundColor: "#fff",
-      }}
-    >
+    <>
+      {/* HEADER */}
       <Header>
         <ImageAju src={Imagem} alt="Logo da empresa" />
-        <Fonte>Encontre Trabalhos</Fonte>
-        <Fonte>Cadastro de serviço</Fonte>
-        <Fonte>Sobre</Fonte>
+        <Link
+          to="/dashboard"
+          style={{
+            margin: "0 10px",
+            textDecoration: "none",
+            color: "#000000ff",
+          }}
+        >
+          Encontre Trabalhos
+        </Link>
+
+        <Link
+          to="/cadastroServico"
+          style={{ margin: "0 10px", textDecoration: "none", color: "#000000" }}
+        >
+          Cadastro de serviço
+        </Link>
 
         <div
           style={{
@@ -115,177 +274,221 @@ const Perfil = () => {
             display: "flex",
             alignItems: "center",
             gap: "16px",
+            position: "relative",
           }}
         >
-          <FaBell
-            style={{
-              fontSize: "20px",
-              color: "#4B2995",
-              cursor: "pointer",
-            }}
+          <Notificacoes />
+          <Imagemnike
+            src={imagemPerfil}
+            alt="Foto do perfil"
+            onClick={() => navigate("/perfil")}
           />
-          <Imagemnike src={imagemPerfil} alt="Perfil" onClick={alterarImagem} />
         </div>
       </Header>
 
-      {/* Perfil */}
-      <div style={{ display: "flex", gap: 32 }}>
-        {/* Foto + botão */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
-          <img
-            src={imagemPerfil}
-            alt="Foto do perfil"
+      <div
+        style={{
+          fontFamily: "Arial, sans-serif",
+          maxWidth: 720,
+          margin: "90px auto 20px",
+          padding: 20,
+          backgroundColor: "#fff",
+        }}
+      >
+        <div style={{ display: "flex", gap: 32 }}>
+          <div
             style={{
-              width: 120,
-              height: 120,
-              borderRadius: "50%",
-              objectFit: "cover",
-              border: "3px solid #5533aa",
-            }}
-          />
-          <button
-            onClick={alterarImagem}
-            style={{
-              marginTop: 8,
-              background: "none",
-              border: "none",
-              color: "#5533aa",
-              textDecoration: "underline",
-              cursor: "pointer",
-              fontSize: 14,
-            }}
-          >
-            Alterar Imagem
-          </button>
-          <input
-            type="file"
-            accept="image/*"
-            ref={inputFileRef}
-            style={{ display: "none" }}
-            onChange={handleImageChange}
-          />
-        </div>
-
-        {/* Infos */}
-        <div style={{ flex: 1 }}>
-          <h2
-            style={{
-              marginBottom: 4,
               display: "flex",
+              flexDirection: "column",
               alignItems: "center",
-              gap: 6,
             }}
           >
-            {nome}
-            <button
-              title="Editar nome"
-              onClick={() => {
-                const novoNome = prompt("Digite seu nome", nome);
-                if (novoNome && novoNome.trim() !== "")
-                  setNome(novoNome.trim());
-              }}
+            <img
+              src={imagemPerfil}
+              alt="Foto do perfil"
               style={{
-                border: "none",
-                background: "none",
-                cursor: "pointer",
-                color: "#5533aa",
-                fontSize: 18,
-                padding: 0,
-                lineHeight: 1,
-              }}
-            >
-              ✏️
-            </button>
-          </h2>
-
-          <p
-            style={{
-              marginTop: 0,
-              marginBottom: 4,
-              fontWeight: "600",
-              color: "#555",
-            }}
-          >
-            {cargo}
-          </p>
-
-          <p style={{ marginTop: 4, fontWeight: "bold" }}>{descricao}</p>
-
-          {/* País */}
-          <p
-            style={{
-              marginTop: 8,
-              fontSize: 14,
-              color: "#333",
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-            }}
-          >
-            <span role="img" aria-label="bandeira Brasil">
-              🇧🇷
-            </span>
-            {pais}
-            <span
-              style={{
-                border: "none",
-                background: "none",
-                cursor: "pointer",
-                color: "#5533aa",
-                fontSize: 14,
-                padding: 0,
-                lineHeight: 1,
-                marginLeft: 8,
-              }}
-            >
-              ✏️
-            </span>
-          </p>
-        </div>
-      </div>
-
-      <div style={{ marginTop: 40 }}>
-        <h3 style={{ marginBottom: 12 }}>Habilidades</h3>
-
-        <UploadBox onClick={handleUploadClick}>
-          <UploadContent>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="40"
-              height="40"
-              fill="rgba(0,0,0,0.3)"
-              viewBox="0 0 24 24"
-            >
-              <path
-                d="M12 16V4m0 0l-4 4m4-4l4 4m5 4v8H3v-8"
-                stroke="rgba(0,0,0,0.3)"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <p style={{ color: "#777", marginTop: 8 }}>Carregar Arquivos</p>
-            <input
-              type="file"
-              ref={inputHabilidadeRef}
-              accept=".pdf,.doc,.docx,.txt"
-              onChange={(e) => {
-                const file = e.target.files[0];
-                if (file) {
-                  alert(`Arquivo "${file.name}" carregado com sucesso!`);
-                }
+                width: 120,
+                height: 120,
+                borderRadius: "50%",
+                objectFit: "cover",
+                border: "3px solid #5533aa",
               }}
             />
-          </UploadContent>
-        </UploadBox>
+            <button
+              onClick={alterarImagem}
+              style={{
+                marginTop: 8,
+                background: "none",
+                border: "none",
+                color: "#5533aa",
+                textDecoration: "underline",
+                cursor: "pointer",
+                fontSize: 14,
+              }}
+            >
+              Alterar Imagem
+            </button>
+            <input
+              type="file"
+              accept="image/*"
+              ref={inputFileRef}
+              style={{ display: "none" }}
+              onChange={handleImageChange}
+            />
+          </div>
+
+          <div style={{ flex: 1 }}>
+            <h2 style={{ marginBottom: 4 }}>
+              {nome}{" "}
+              <button
+                onClick={() => {
+                  const novoNome = prompt("Digite seu nome", nome);
+                  if (novoNome && novoNome.trim() !== "")
+                    setNome(novoNome.trim());
+                }}
+                style={{
+                  border: "none",
+                  background: "none",
+                  cursor: "pointer",
+                  color: "#5533aa",
+                  fontSize: 18,
+                }}
+              >
+                ✏️
+              </button>
+            </h2>
+
+            <p
+              style={{
+                marginTop: 0,
+                marginBottom: 4,
+                fontWeight: "600",
+                color: "#555",
+              }}
+            >
+              {email}
+            </p>
+
+            <p style={{ marginTop: 4, fontWeight: "bold" }}>{descricao}</p>
+
+            <p
+              style={{
+                marginTop: 8,
+                fontSize: 14,
+                color: "#333",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              🇧🇷 {pais}
+              <span
+                style={{
+                  cursor: "pointer",
+                  color: "#5533aa",
+                  marginLeft: 8,
+                }}
+              ></span>
+            </p>
+          </div>
+        </div>
+
+        <div style={{ marginTop: 40 }}>
+          <h3 style={{ marginBottom: 12 }}>Habilidades</h3>
+          <UploadBox onClick={handleUploadClick}>
+            <UploadContent>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="40"
+                height="40"
+                fill="rgba(0,0,0,0.3)"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M12 16V4m0 0l-4 4m4-4l4 4m5 4v8H3v-8"
+                  stroke="rgba(0,0,0,0.3)"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <p style={{ color: "#777", marginTop: 8 }}>Carregar Arquivos</p>
+              <input
+                type="file"
+                ref={inputHabilidadeRef}
+                accept=".pdf,.doc,.docx,.txt"
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    alert(`Arquivo "${file.name}" carregado com sucesso!`);
+                  }
+                }}
+              />
+            </UploadContent>
+          </UploadBox>
+        </div>
+        <div style={{ marginTop: 40 }}>
+          <h3 style={{ marginBottom: 12 }}>Meus Serviços</h3>
+          {meusServicos.length === 0 ? (
+            <p>Você ainda não cadastrou nenhum serviço.</p>
+          ) : (
+            meusServicos.map((servico) => (
+              <div
+                key={servico.id_servico}
+                style={{
+                  border: "1px solid #ccc",
+                  borderRadius: 10,
+                  padding: 16,
+                  marginBottom: 12,
+                }}
+              >
+                <h4 style={{ margin: 0, color: "#4B2995" }}>{servico.nome}</h4>
+                <p style={{ margin: "4px 0" }}>
+                  <strong>Categoria:</strong> {servico.nome_categoria}
+                </p>
+                <p style={{ margin: "4px 0" }}>{servico.descricao}</p>
+                <p style={{ margin: "4px 0" }}>
+                  <strong>Valor:</strong> R$ {servico.valor}
+                </p>
+                <p style={{ margin: "4px 0" }}>
+                  <strong>Localização:</strong> {servico.localizacao}
+                </p>
+
+                <div style={{ marginTop: 8 }}>
+                  <button
+                    onClick={() => handleEditar(servico)}
+                    style={{
+                      background: "#4B2995",
+                      color: "white",
+                      border: "none",
+                      borderRadius: 8,
+                      padding: "6px 12px",
+                      cursor: "pointer",
+                      marginRight: 8,
+                    }}
+                  >
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => handleExcluir(servico.id_servico)}
+                    style={{
+                      background: "red",
+                      color: "white",
+                      border: "none",
+                      borderRadius: 8,
+                      padding: "6px 12px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Excluir
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

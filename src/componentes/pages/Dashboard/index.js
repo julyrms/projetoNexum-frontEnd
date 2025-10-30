@@ -1,63 +1,14 @@
-import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState, useRef } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import styled from "styled-components";
 import { FaBell } from "react-icons/fa";
 import Imagem from "../../../Img/logoheader.png";
-import Perfil from "../../../Img/logo.png"; // Corrigido
+import PerfilPadrao from "../../../Img/logo.png";
 import ImageBloco from "../../../Img/imagembloco.png";
 import "../Dashboard/index.css";
+import { Link } from "react-router-dom";
 
-// Função para buscar movimentações do usuário
-const fetchMovimentacoes = async () => {
-  try {
-    const usuarioString = localStorage.getItem("usuario");
-    const usuario = JSON.parse(usuarioString);
-    const usuarioId = usuario?.id;
-
-    const resposta = await fetch(
-      `http://localhost:3000/movimentacoes/getMovimentacoesPorUsuario/${usuarioId}`
-    );
-    if (!resposta.ok) {
-      throw new Error("Erro ao buscar movimentações");
-    }
-    const dados = await resposta.json();
-    return dados;
-  } catch (erro) {
-    console.error("Descrição do erro:", erro);
-    throw erro;
-  }
-};
-
-const cargos = [
-  "Designer Gráfico",
-  "Designer UI/UX",
-  "Designer de Produto",
-  "Desenvolvedor Front-end",
-  "Desenvolvedor Fullstack",
-];
-
-const cidades = [
-  "Araçatuba",
-  "Birigui",
-  "Penápolis",
-  "Guararapes",
-  "Bilac",
-  "Brejo Alegre",
-  "Coroados",
-  "Mirandópolis",
-  "Lavínia",
-  "Valparaíso",
-  "Castilho",
-  "Santa Fé do Sul",
-  "Ribeirão Preto",
-  "Mirassol",
-  "S. J. do Rio Preto",
-  "Tupã",
-  "Marília",
-  "São Paulo - Capital",
-];
-
-// Styled Components
 const Botao = styled.button`
   background-color: rgb(0, 1, 85);
   color: white;
@@ -92,8 +43,9 @@ const Corpo = styled.div`
   padding-top: 60px;
   padding-bottom: 40px;
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
 `;
 
 const Header = styled.div`
@@ -109,6 +61,7 @@ const Header = styled.div`
   top: 0;
   left: 0;
   right: 0;
+  z-index: 10;
 `;
 
 const ImageAju = styled.img`
@@ -131,12 +84,6 @@ const ImagemRoxo = styled.img`
   gap: 20px;
 `;
 
-const Caixa = styled.div`
-  display: flex;
-  justify-content: center;
-  margin-top: 40px;
-`;
-
 const Bloco = styled.div`
   width: 800px;
   height: 150px;
@@ -154,34 +101,36 @@ const Bloco = styled.div`
 const Quadro = styled.div`
   display: flex;
   justify-content: center;
-  margin-top: 30px;
   gap: 90px;
 `;
 
 const Escopo = styled.div`
   width: 800px;
-  height: 300px;
-  background-color: #ffffffff;
-  border-radius: 19px;
-  border: 3px solid #a794cf;
-  color: #000000ff;
-  padding: 20px 30px;
-  max-width: 800px;
+  background-color: #fff;
+  border-radius: 12px;
+  border: 2px solid #a794cf;
+  padding: 25px 30px;
   display: flex;
-  font-weight: bold;
-  font-size: 25px;
+  flex-direction: column;
+  font-size: 16px;
+  font-weight: 400;
+  color: #000000ff;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  cursor: default;
+
+  &:hover {
+    box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.15);
+  }
 `;
 
 const Pasta = styled.div`
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
   margin-top: 30px;
-  gap: 90px;
-`;
-
-const Texto = styled.div`
-  font-size: 14px;
-  color: #756b6bff;
+  gap: 40px;
+  width: 100%;
 `;
 
 const BotaoX = styled.button`
@@ -202,66 +151,169 @@ const BotaoX = styled.button`
   }
 `;
 
-export default function Dashboard() {
-  const [movimentacoes, setMovimentacoes] = useState([]);
-  const [totalEntradas, setTotalEntradas] = useState(0);
-  const [totalSaidas, setTotalSaidas] = useState(0);
-  const [cargoBusca, setCargoBusca] = useState("");
-  const [cargosFiltrados, setCargosFiltrados] = useState([]);
-  const [cidadeSelecionada, setCidadeSelecionada] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [erro, setErro] = useState(null);
+const NotifPopup = styled.div`
+  position: absolute;
+  top: 50px;
+  right: 0;
+  width: 300px;
+  background: #fff;
+  border: 2px solid #a794cf;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  padding: 15px;
+  z-index: 999;
+`;
 
-  const handleCargoChange = (e) => {
-    const valor = e.target.value;
-    setCargoBusca(valor);
+const NotifItem = styled.div`
+  background: #f4f2ff;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #333;
+`;
 
-    if (valor.length > 0) {
-      const filtrados = cargos.filter((c) =>
-        c.toLowerCase().includes(valor.toLowerCase())
-      );
-      setCargosFiltrados(filtrados);
-    } else {
-      setCargosFiltrados([]);
-    }
-  };
+const NotifTitulo = styled.h5`
+  font-size: 15px;
+  margin: 0 0 5px 0;
+  color: #4b2995;
+`;
+
+const Badge = styled.span`
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #4b2995;
+  color: #fff;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 50%;
+`;
+
+const Notificacoes = () => {
+  const [notificacoes, setNotificacoes] = useState([]);
+  const [notifAberta, setNotifAberta] = useState(false);
+  const [erroNotif, setErroNotif] = useState(null);
+  const popupRef = useRef(null);
+
+  const toggleNotificacoes = () => setNotifAberta(!notifAberta);
 
   useEffect(() => {
-    const carregarMovimentacoes = async () => {
+    const handleClickFora = (e) => {
+      if (popupRef.current && !popupRef.current.contains(e.target)) {
+        setNotifAberta(false);
+      }
+    };
+    document.addEventListener("click", handleClickFora);
+    return () => document.removeEventListener("click", handleClickFora);
+  }, []);
+
+  useEffect(() => {
+    if (notifAberta) {
+      fetch("http://localhost:3000/notificacoes")
+        .then((res) => {
+          if (!res.ok) throw new Error("Erro ao buscar notificações");
+          return res.json();
+        })
+        .then((data) => setNotificacoes(data))
+        .catch((err) => setErroNotif(err.message));
+    }
+  }, [notifAberta]);
+
+  return (
+    <div ref={popupRef} style={{ position: "relative" }}>
+      <div style={{ position: "relative" }}>
+        <FaBell
+          onClick={toggleNotificacoes}
+          style={{ fontSize: "20px", color: "#4B2995", cursor: "pointer" }}
+        />
+        {notificacoes.length > 0 && <Badge>{notificacoes.length}</Badge>}
+      </div>
+
+      {notifAberta && (
+        <NotifPopup>
+          <h5 style={{ marginBottom: "10px", color: "#4B2995" }}>
+            Notificações
+          </h5>
+          {erroNotif ? (
+            <p style={{ color: "red" }}>{erroNotif}</p>
+          ) : notificacoes.length === 0 ? (
+            <p>Nenhuma notificação.</p>
+          ) : (
+            notificacoes.map((n) => (
+              <NotifItem key={n.id}>
+                <NotifTitulo>{n.titulo}</NotifTitulo>
+                <div>{n.mensagem}</div>
+              </NotifItem>
+            ))
+          )}
+        </NotifPopup>
+      )}
+    </div>
+  );
+};
+
+export default function Dashboard() {
+  const navigate = useNavigate();
+  const [servicos, setServicos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(null);
+  const [imagemPerfil, setImagemPerfil] = useState(PerfilPadrao);
+  const [filtroTexto, setFiltroTexto] = useState("");
+  const [filtroCidade, setFiltroCidade] = useState("");
+
+  useEffect(() => {
+    const imagemSalva = localStorage.getItem("imagemPerfil");
+    if (imagemSalva) setImagemPerfil(imagemSalva);
+
+    const atualizarImagem = () => {
+      const novaImagem = localStorage.getItem("imagemPerfil");
+      if (novaImagem) setImagemPerfil(novaImagem);
+    };
+
+    window.addEventListener("storage", atualizarImagem);
+    return () => window.removeEventListener("storage", atualizarImagem);
+  }, []);
+
+  useEffect(() => {
+    const carregarServicos = async () => {
       try {
         setLoading(true);
-        setErro(null);
-        const dados = await fetchMovimentacoes();
-        setMovimentacoes(dados);
+        const resposta = await fetch(
+          "http://localhost:3001/servicos/todosServicos"
+        );
+        if (!resposta.ok) throw new Error("Erro ao buscar serviços");
+        const dados = await resposta.json();
+        setServicos(dados);
       } catch (erro) {
-        console.error("Erro ao buscar movimentações:", erro);
-        setErro("Erro ao buscar movimentações");
+        setErro("Erro ao buscar serviços. Verifique o servidor.");
       } finally {
         setLoading(false);
       }
     };
-
-    carregarMovimentacoes();
+    carregarServicos();
   }, []);
 
-  useEffect(() => {
-    let entradas = 0;
-    let saidas = 0;
-    movimentacoes.forEach((mov) => {
-      if (mov.tipo === "entrada") entradas += Number(mov.valor);
-      else if (mov.tipo === "saida") saidas += Number(mov.valor);
-    });
-    setTotalEntradas(entradas);
-    setTotalSaidas(saidas);
-  }, [movimentacoes]);
+  const formatarData = (dataIso) => {
+    if (!dataIso) return "Data Desconhecida";
+    const data = new Date(dataIso);
+    return data.toLocaleDateString("pt-BR");
+  };
 
   return (
     <>
       <Header>
         <ImageAju src={Imagem} alt="Logo da empresa" />
-        <Fonte>Encontre Trabalhos</Fonte>
-        <Fonte>Cadastro de serviço</Fonte>
-        <Fonte>Sobre</Fonte>
+        <Fonte style={{ margin: "0 10px", color: "#4B2995" }}>
+          Encontre Trabalhos
+        </Fonte>
+
+        <Link
+          to="/cadastroServico"
+          style={{ margin: "0 10px", textDecoration: "none", color: "#000000" }}
+        >
+          Cadastro de serviço
+        </Link>
 
         <div
           style={{
@@ -269,206 +321,175 @@ export default function Dashboard() {
             display: "flex",
             alignItems: "center",
             gap: "16px",
+            position: "relative",
           }}
         >
-          <FaBell
-            style={{
-              fontSize: "20px",
-              color: "#4B2995",
-              cursor: "pointer",
-            }}
+          <Notificacoes />
+          <Imagemnike
+            src={imagemPerfil}
+            alt="Foto do perfil"
+            onClick={() => navigate("/perfil")}
           />
-          <Imagemnike src={Perfil} alt="Foto do perfil" />
         </div>
       </Header>
 
+      <div
+        style={{
+          width: "800px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          margin: "100px auto 0 auto",
+          gap: "10px",
+        }}
+      >
+        <input
+          type="text"
+          placeholder="Pesquisar serviço..."
+          value={filtroTexto}
+          onChange={(e) => setFiltroTexto(e.target.value)}
+          style={{
+            flex: 2,
+            padding: "10px 15px",
+            borderRadius: "8px",
+            border: "2px solid #a794cf",
+            fontSize: "15px",
+            outline: "none",
+          }}
+        />
+
+        <select
+          value={filtroCidade}
+          onChange={(e) => setFiltroCidade(e.target.value)}
+          style={{
+            flex: 1,
+            padding: "10px 15px",
+            borderRadius: "8px",
+            border: "2px solid #a794cf",
+            fontSize: "15px",
+            outline: "none",
+            backgroundColor: "white",
+          }}
+        >
+          <option value="">Todas as cidades</option>
+          {[...new Set(servicos.map((s) => s.localizacao))].map((cidade) => (
+            <option key={cidade} value={cidade}>
+              {cidade}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <Corpo>
         <div className="container">
-          <div className="row">
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                gap: "20px",
-                marginTop: "40px",
-              }}
-            >
-              <div style={{ position: "relative", width: "400px" }}>
-                <input
-                  type="text"
-                  value={cargoBusca}
-                  onChange={handleCargoChange}
-                  placeholder="Filtre os Cargos Disponíveis"
-                  style={{
-                    width: "100%",
-                    padding: "10px 15px",
-                    border: "3px solid #a794cf",
-                    borderRadius: "25px",
-                    fontSize: "14px",
-                  }}
-                />
-                {cargosFiltrados.length > 0 && (
-                  <ul
-                    style={{
-                      listStyle: "none",
-                      margin: 0,
-                      padding: "10px",
-                      border: "1px solid #a794cf",
-                      borderRadius: "10px",
-                      background: "#fff",
-                      position: "absolute",
-                      top: "45px",
-                      width: "100%",
-                      zIndex: 10,
-                    }}
-                  >
-                    {cargosFiltrados.map((c, index) => (
-                      <li
-                        key={index}
-                        style={{ padding: "5px 0", cursor: "pointer" }}
-                        onClick={() => {
-                          setCargoBusca(c);
-                          setCargosFiltrados([]);
+          <Quadro>
+            <Bloco>
+              <ImagemRoxo src={ImageBloco} alt="Imagem decorativa" />
+              <Fontes>
+                A <b>Nexum</b> oferece um serviço de busca de empregos e
+                funcionários para <b>empresas de grande e pequeno porte.</b>{" "}
+                Vagas de diversos ramos do mercado estão disponíveis em{" "}
+                <b>nosso sistema</b>, navegue pela barra de pesquisa e encontre
+                a <b>oportunidade da sua vida.</b>
+              </Fontes>
+            </Bloco>
+          </Quadro>
+
+          <Fonte
+            style={{
+              margin: "25px 250px   ",
+              color: "#8437b4ff",
+              fontWeight: "bold",
+            }}
+          >
+            Trabalhos disponíveis:
+          </Fonte>
+
+          <Pasta>
+            {loading && (
+              <p style={{ width: "800px", textAlign: "center" }}>
+                Carregando serviços...
+              </p>
+            )}
+            {erro && (
+              <p style={{ color: "red", width: "800px", textAlign: "center" }}>
+                {erro}
+              </p>
+            )}
+            {!loading &&
+              servicos
+                .filter((servico) => {
+                  const textoMatch = servico.nome
+                    .toLowerCase()
+                    .includes(filtroTexto.toLowerCase());
+                  const cidadeMatch = filtroCidade
+                    ? servico.localizacao === filtroCidade
+                    : true;
+                  return textoMatch && cidadeMatch;
+                })
+                .map((servico) => (
+                  <Escopo key={servico.id_servico}>
+                    <div>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
+                        {servico.nome}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "14px",
+                          marginTop: "8px",
+                          color: "#555",
                         }}
                       >
-                        {c}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-
-              <select
-                value={cidadeSelecionada}
-                onChange={(e) => setCidadeSelecionada(e.target.value)}
-                style={{
-                  width: "400px",
-                  padding: "10px 15px",
-                  border: "3px solid #a794cf",
-                  borderRadius: "25px",
-                  fontSize: "14px",
-                }}
-              >
-                <option value="">Filtre as Cidades</option>
-                {cidades.map((cidade, idx) => (
-                  <option key={idx} value={cidade}>
-                    🇧🇷 {cidade}
-                  </option>
+                        Publicado: {formatarData(servico.criacao)} &nbsp;&nbsp;
+                        Postado por: {servico.nome_usuario}
+                      </div>
+                      <div
+                        style={{
+                          backgroundColor: "#D9C9F3",
+                          color: "white",
+                          fontWeight: "bold",
+                          borderRadius: "10px",
+                          padding: "4px 12px",
+                          float: "right",
+                          marginTop: "-36px",
+                        }}
+                      >
+                        R$
+                        {Number(servico.valor).toFixed(2).replace(".", ",")}
+                      </div>
+                      <div
+                        style={{
+                          marginTop: "20px",
+                          fontSize: "16px",
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {servico.descricao}
+                      </div>
+                      <div
+                        style={{
+                          marginTop: "20px",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
+                      >
+                        <BotaoX>Enviar proposta</BotaoX>
+                        <span
+                          style={{
+                            fontSize: "14px",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "5px",
+                          }}
+                        >
+                          🇧🇷 {servico.localizacao}
+                        </span>
+                      </div>
+                    </div>
+                  </Escopo>
                 ))}
-              </select>
-            </div>
-
-            <Quadro>
-              <Bloco>
-                <ImagemRoxo src={ImageBloco} alt="Imagem decorativa" />
-                <Fontes>
-                  A <b>Nexum</b> oferece um serviço de busca de empregos e
-                  funcionários para <b>empresas de grande e pequeno porte.</b>{" "}
-                  Vagas de diversos ramos do mercado de trabalho estão
-                  disponíveis em <b>nosso sistema</b>, navegue pela barra de
-                  pesquise e encontre a <b>oportunidade da sua vida.</b>
-                </Fontes>
-              </Bloco>
-            </Quadro>
-
-            <Pasta>
-              <Escopo>
-                <div>
-                  <div style={{ fontWeight: "bold", fontSize: "20px" }}>
-                    Desenvolvimento de uma identidade visual para uma página de
-                    Instagram - Açaíteria
-                  </div>
-
-                  <div
-                    style={{
-                      fontSize: "14px",
-                      marginTop: "8px",
-                      color: "#555",
-                    }}
-                  >
-                    Publicado: 08/08/2025 &nbsp;&nbsp; Guilherme Felix dos
-                    Santos
-                  </div>
-
-                  <div
-                    style={{
-                      backgroundColor: "#D9C9F3",
-                      color: "white",
-                      fontWeight: "bold",
-                      borderRadius: "10px",
-                      padding: "4px 12px",
-                      float: "right",
-                      marginTop: "-36px",
-                    }}
-                  >
-                    R$1200
-                  </div>
-
-                  <div
-                    style={{
-                      marginTop: "20px",
-                      fontSize: "16px",
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    Preciso de artes que divulguem meus produtos e meu trabalho
-                    com montagem de copos de açaí.{" "}
-                    <strong>- Prazo pra Entrega: 18/08.</strong>
-                  </div>
-
-                  <div
-                    style={{
-                      marginTop: "15px",
-                      display: "flex",
-                      gap: "10px",
-                    }}
-                  >
-                    <span
-                      style={{
-                        backgroundColor: "#C0E7FF",
-                        padding: "3px 10px",
-                        borderRadius: "10px",
-                        fontSize: "12px",
-                      }}
-                    >
-                      Canva
-                    </span>
-                    <span
-                      style={{
-                        backgroundColor: "#C0E7FF",
-                        padding: "3px 10px",
-                        borderRadius: "10px",
-                        fontSize: "12px",
-                      }}
-                    >
-                      Photoshop
-                    </span>
-                  </div>
-
-                  <div
-                    style={{
-                      marginTop: "20px",
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
-                    <BotaoX>Enviar proposta</BotaoX>
-                    <span
-                      style={{
-                        fontSize: "14px",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "5px",
-                      }}
-                    >
-                      🇧🇷 S. J. do Rio Preto
-                    </span>
-                  </div>
-                </div>
-              </Escopo>
-            </Pasta>
-          </div>
+          </Pasta>
         </div>
       </Corpo>
     </>

@@ -59,6 +59,7 @@ const BotaoAzul = styled.button`
 export default function Cadastrar() {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
+  const [celular, setCelular] = useState("");
   const [senha, setSenha] = useState("");
   const [confSenha, setConfSenha] = useState("");
   const [erro, setErro] = useState("");
@@ -80,27 +81,29 @@ export default function Cadastrar() {
     setLoading(true);
 
     try {
-      const resposta = await fetch("http://localhost:3000/usuarios/registrar", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ nome, email, senha }),
-      });
+      const resposta = await fetch('http://localhost:3001/usuarios/criarUsuario',{
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ nome, celular, senha, email  }),
+        }
+      );
 
       const dados = await resposta.json();
+      console.log(dados);
 
       if (resposta.ok) {
         alert("Cadastro realizado com sucesso!");
         navigate("/");
       } else {
         setErro(
-          dados.message || "Erro ao realizar o cadastro. Tente novamente."
+          dados.detalhe || "Erro ao realizar o cadastro. Tente novamente."
         );
       }
     } catch (e) {
       console.error("Falha ao conectar à API", e);
-      setErro("Não foi possível conectar ao servidor.");
+      setErro("Não foi possível conectar ao servidor.", e);
     } finally {
       setLoading(false);
     }
@@ -132,6 +135,25 @@ export default function Cadastrar() {
                   required
                 />
               </div>
+
+              <div className="mb-3">
+                <Fonte2>
+                  <label htmlFor="celular" className="form-label">
+                    Telefone
+                  </label>
+                </Fonte2>
+                <input
+                  type="text"
+                  className="form-control"
+                  id="celular"
+                  name="celular"
+                  placeholder="Insira seu número de telefone"
+                  value={celular}
+                  onChange={(e) => setCelular(e.target.value)}
+                  required
+                />
+              </div>
+
 
               <div className="mb-3">
                 <Fonte2>
