@@ -83,6 +83,7 @@ const Notificacoes = () => {
   const [notificacoes, setNotificacoes] = useState([]);
   const [notifAberta, setNotifAberta] = useState(false);
   const [erroNotif, setErroNotif] = useState(null);
+  const [carregando, setCarregando] = useState(false);
   const popupRef = useRef(null);
 
   const toggleNotificacoes = () => setNotifAberta(!notifAberta);
@@ -98,43 +99,108 @@ const Notificacoes = () => {
   }, []);
 
   useEffect(() => {
-    if (notifAberta) {
-      fetch("http://localhost:3000/notificacoes")
-        .then((res) => {
-          if (!res.ok) throw new Error("Erro ao buscar notificações");
-          return res.json();
-        })
-        .then((data) => setNotificacoes(data))
-        .catch((err) => setErroNotif(err.message));
-    }
+    if (!notifAberta) return;
+
+    const fetchNotificacoes = async () => {
+      setCarregando(true);
+      setErroNotif(null);
+      try {
+        const res = await fetch(
+          "http://localhost:3001/notificacoes/todasNotificacoes"
+        );
+        if (!res.ok) throw new Error("Erro ao buscar notificações");
+
+        const data = await res.json();
+
+        const notificacoesLimitadas = data.slice(0, 6).reverse();
+        setNotificacoes(notificacoesLimitadas);
+      } catch (err) {
+        setErroNotif(err.message);
+      } finally {
+        setCarregando(false);
+      }
+    };
+
+    fetchNotificacoes();
   }, [notifAberta]);
+
+  const apagarNotificacao = async (id) => {
+    try {
+      const res = await fetch(
+        `http://localhost:3001/notificacoes/apagarNotificacao/${id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!res.ok) throw new Error("Erro ao apagar notificação");
+
+      setNotificacoes((prev) => prev.filter((n) => n.id_notificacao !== id));
+    } catch (err) {
+      console.error(err);
+      setErroNotif("Erro ao apagar notificação");
+    }
+  };
 
   return (
     <div ref={popupRef} style={{ position: "relative" }}>
-      <div style={{ position: "relative" }}>
-        <FaBell
-          onClick={toggleNotificacoes}
-          style={{ fontSize: "20px", color: "#4B2995", cursor: "pointer" }}
-        />
-        {notificacoes.length > 0 && <Badge>{notificacoes.length}</Badge>}
-      </div>
+      <FaBell
+        onClick={toggleNotificacoes}
+        style={{ fontSize: "20px", color: "#4B2995", cursor: "pointer" }}
+      />
 
       {notifAberta && (
-        <NotifPopup>
+        <NotifPopup
+          style={{
+            maxHeight: "400px",
+            overflowY: "auto",
+            scrollbarWidth: "thin",
+            scrollbarColor: "#4B2995 #eaeaea",
+          }}
+        >
           <h5 style={{ marginBottom: "10px", color: "#4B2995" }}>
             Notificações
           </h5>
-          {erroNotif ? (
+
+          {carregando ? (
+            <p>Carregando...</p>
+          ) : erroNotif ? (
             <p style={{ color: "red" }}>{erroNotif}</p>
           ) : notificacoes.length === 0 ? (
             <p>Nenhuma notificação.</p>
           ) : (
-            notificacoes.map((n) => (
-              <NotifItem key={n.id}>
-                <NotifTitulo>{n.titulo}</NotifTitulo>
-                <div>{n.mensagem}</div>
-              </NotifItem>
-            ))
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "10px",
+                paddingBottom: "5px",
+              }}
+            >
+              {notificacoes.map((n) => (
+                <NotifItem key={n.id_notificacao}>
+                  <NotifTitulo>{n.titulo || "Nova Notificação"}</NotifTitulo>
+                  <div>{n.mensagem}</div>
+                  <button
+                    onClick={() => apagarNotificacao(n.id_notificacao)}
+                    style={{
+                      marginTop: "8px",
+                      alignSelf: "flex-end",
+                      fontSize: "12px",
+                      background: "transparent",
+                      border: "none",
+                      color: "red",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                    }}
+                  >
+                    Apagar
+                  </button>
+                </NotifItem>
+              ))}
+            </div>
           )}
         </NotifPopup>
       )}
