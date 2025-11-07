@@ -1,44 +1,9 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
-import { FaBell } from "react-icons/fa";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useParams } from "react-router-dom";
 import Imagem from "../../../Img/logoheader.png";
 import PerfilImg from "../../../Img/user-icon.png";
-
-const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  gap: 75px;
-  align-items: center;
-  height: 70px;
-  padding: 12px 40px;
-  background: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 10;
-`;
-
-const ImageAju = styled.img`
-  width: 150px;
-  height: 25px;
-`;
-
-const Imagemnike = styled.img`
-  width: 35px;
-  height: 35px;
-  border-radius: 80px;
-  cursor: pointer;
-`;
-
-const Fonte = styled.div`
-  color: #000000;
-  font-weight: 600;
-  font-size: 18px;
-  margin: 0;
-`;
+import { FaBell } from "react-icons/fa";
 
 const NotifPopup = styled.div`
   position: absolute;
@@ -68,15 +33,39 @@ const NotifTitulo = styled.h5`
   color: #4b2995;
 `;
 
-const Badge = styled.span`
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  background: #4b2995;
-  color: #fff;
-  font-size: 0.7rem;
-  padding: 2px 6px;
-  border-radius: 50%;
+const Fonte = styled.div`
+  color: #000000ff;
+  font-weight: 600;
+  font-size: 18px;
+  margin: 0;
+`;
+
+const Imagemnike = styled.img`
+  width: 35px;
+  height: 35px;
+  border-radius: 80px;
+  cursor: pointer;
+`;
+
+const Header = styled.div`
+  display: flex;
+  justify-content: space-between;
+  gap: 75px;
+  align-items: center;
+  height: 70px;
+  padding: 12px 40px;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+`;
+
+const ImageAju = styled.img`
+  width: 150px;
+  height: 25px;
 `;
 
 const Notificacoes = () => {
@@ -208,119 +197,71 @@ const Notificacoes = () => {
   );
 };
 
-const UploadBox = styled.div`
-  border: 4px solid #4b2995;
-  border-radius: 12px;
-  padding: 50px;
-  margin-top: 12px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`;
-
-const UploadContent = styled.div`
-  text-align: center;
-  color: #aaa;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-
-  input[type="file"] {
-    display: none;
-  }
-`;
-
-const Perfil = () => {
+export default function Perfil() {
   const navigate = useNavigate();
-  const [nome, setNome] = useState("Guilherme Felix");
-  const [email, setEmail] = useState("guifelix12@outlook.com");
-  const [descricao, setDescricao] = useState(
-    "Perfil de Usuário Oficial - Nexum"
-  );
-  const [habilidades, setHabilidades] = useState([]);
-
-  const [pais, setPais] = useState("Brasil");
-  const [imagemPerfil, setImagemPerfil] = useState(PerfilImg);
-  const inputFileRef = useRef(null);
-  const inputHabilidadeRef = useRef(null);
-
+  const { id } = useParams();
+  const [usuario, setUsuario] = useState(null);
   const [meusServicos, setMeusServicos] = useState([]);
-  const userId = localStorage.getItem("user_id");
+  const [habilidades, setHabilidades] = useState([]);
+  const [imagemPerfil, setImagemPerfil] = useState(PerfilImg);
 
   useEffect(() => {
-    const habs = localStorage.getItem("user_habilidades");
+    const fetchPerfil = async () => {
+      try {
+        const resUsuario = await fetch(
+          `http://localhost:3001/usuarios/usuarioPorId/${id}`
+        );
+        const dataUsuario = await resUsuario.json();
+        setUsuario(dataUsuario);
 
-    if (habs) {
-      const lista = habs
-        .replace("{", "")
-        .replace("}", "")
-        .replace("[", "")
-        .replace("]", "")
-        .split(",")
-        .map((h) => h.replace(/"/g, "").trim())
-        .filter((h) => h.length > 0);
+        const resServicos = await fetch(
+          `http://localhost:3001/servicos/usuarioServicos/${id}`
+        );
+        const dataServicos = await resServicos.json();
+        setMeusServicos(dataServicos);
 
-      setHabilidades(lista);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!userId) return;
-
-    fetch(`http://localhost:3001/servicos/usuarioServicos/${userId}`)
-      .then((res) => res.json())
-      .then((data) => setMeusServicos(data))
-      .catch((err) => console.error("Erro ao buscar serviços:", err));
-  }, [userId]);
-
-  const handleEditar = (servico) => {
-    navigate(`/editarServico/${servico.id_servico}`);
-  };
-
-  const handleExcluir = async (id) => {
-    if (!window.confirm("Deseja realmente excluir este serviço?")) return;
-
-    try {
-      const resposta = await fetch(
-        `http://localhost:3001/servicos/apagarServico/${id}`,
-        {
-          method: "DELETE",
+        const habs = localStorage.getItem("user_habilidades");
+        if (habs) {
+          const lista = habs
+            .replace("{", "")
+            .replace("}", "")
+            .replace("[", "")
+            .replace("]", "")
+            .split(",")
+            .map((h) => h.replace(/"/g, "").trim())
+            .filter((h) => h.length > 0);
+          setHabilidades(lista);
         }
-      );
-      if (resposta.ok) {
-        setMeusServicos((prev) => prev.filter((s) => s.id_servico !== id));
-      } else {
-        alert("Erro ao excluir serviço.");
+      } catch (err) {
+        console.error("Erro ao buscar perfil:", err);
       }
-    } catch (error) {
-      console.error(error);
-    }
+    };
+    fetchPerfil();
+  }, [id]);
+
+  const abrirWhatsApp = () => {
+    if (!usuario || !usuario.celular) return;
+    const numero = usuario.celular.replace(/\D/g, "");
+    const mensagem = encodeURIComponent(
+      `Olá ${usuario.nome}, tenho interesse nos seus serviços.`
+    );
+    window.open(`https://wa.me/55${numero}?text=${mensagem}`, "_blank");
   };
 
-  useEffect(() => {
-    const nomeSalvo = localStorage.getItem("user_nome");
-    const emailSalvo = localStorage.getItem("user_email");
-
-    if (nomeSalvo) setNome(nomeSalvo);
-    if (emailSalvo) setEmail(emailSalvo);
-  }, []);
+  if (!usuario)
+    return (
+      <p style={{ textAlign: "center", marginTop: "50px" }}>
+        Carregando perfil...
+      </p>
+    );
 
   return (
     <>
-      {/* HEADER */}
       <Header>
         <ImageAju src={Imagem} alt="Logo da empresa" />
-        <Link
-          to="/dashboard"
-          style={{
-            margin: "0 10px",
-            textDecoration: "none",
-            color: "#000000ff",
-          }}
-        >
+        <Fonte style={{ margin: "0 10px", color: "#4B2995" }}>
           Encontre Trabalhos
-        </Link>
+        </Fonte>
 
         <Link
           to="/cadastroServico"
@@ -356,6 +297,22 @@ const Perfil = () => {
           backgroundColor: "#fff",
         }}
       >
+        <button
+          onClick={() => navigate("/dashboard")}
+          style={{
+            background: "transparent",
+            border: "none",
+            fontSize: 22,
+            cursor: "pointer",
+            color: "#4B2995",
+            marginBottom: 10,
+            marginLeft: -5,
+          }}
+          title="Voltar"
+        >
+          ←
+        </button>
+
         <div style={{ display: "flex", gap: 32 }}>
           <div
             style={{
@@ -378,71 +335,43 @@ const Perfil = () => {
           </div>
 
           <div style={{ flex: 1 }}>
-            <h2 style={{ marginBottom: 4 }}>
-              {nome}{" "}
-              <button
-                onClick={() => {
-                  const novoNome = prompt("Digite seu nome", nome);
-                  if (novoNome && novoNome.trim() !== "")
-                    setNome(novoNome.trim());
-                }}
-                style={{
-                  border: "none",
-                  background: "none",
-                  cursor: "pointer",
-                  color: "#5533aa",
-                  fontSize: 18,
-                }}
-              >
-                ✏️
-              </button>
-            </h2>
-
-            <p
-              style={{
-                marginTop: 0,
-                marginBottom: 4,
-                fontWeight: "600",
-                color: "#555",
-              }}
-            >
-              {email}
+            <h2>{usuario.nome}</h2>
+            <p style={{ fontWeight: "600", color: "#555" }}>{usuario.email}</p>
+            <p style={{ marginTop: 4, fontWeight: "bold" }}>
+              {usuario.descricao || "Perfil do usuário"}
             </p>
-
-            <p style={{ marginTop: 4, fontWeight: "bold" }}>{descricao}</p>
-
-            <p
-              style={{
-                marginTop: 8,
-                fontSize: 14,
-                color: "#333",
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-              }}
-            >
-              🇧🇷 {pais}
-              <span
-                style={{
-                  cursor: "pointer",
-                  color: "#5533aa",
-                  marginLeft: 8,
-                }}
-              ></span>
+            <p style={{ marginTop: 8, fontSize: 14, color: "#333" }}>
+              🇧🇷 Brasil
             </p>
           </div>
         </div>
-
+        <div style={{ marginTop: 30, textAlign: "center" }}>
+          <button
+            onClick={abrirWhatsApp}
+            style={{
+              background: "#4B2995",
+              color: "#fff",
+              border: "none",
+              padding: "10px 20px",
+              borderRadius: 25,
+              fontSize: 16,
+              cursor: "pointer",
+              fontWeight: "bold",
+            }}
+          >
+            Contatar via WhatsApp
+          </button>
+        </div>
+        {/* HABILIDADES */}
         <div style={{ marginTop: 40 }}>
-          <h3 style={{ marginBottom: 12 }}>Habilidades</h3>
-
+          <h3>Habilidades</h3>
           {habilidades.length === 0 ? (
-            <p>Você ainda não adicionou habilidades.</p>
+            <p>Este usuário ainda não adicionou habilidades.</p>
           ) : (
             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-              {habilidades.map((hab, index) => (
+              {habilidades.map((hab, idx) => (
                 <span
-                  key={index}
+                  key={idx}
                   style={{
                     background: "#f3e8ff",
                     padding: "6px 12px",
@@ -457,40 +386,12 @@ const Perfil = () => {
               ))}
             </div>
           )}
-          <button
-            onClick={() => {
-              const novas = prompt(
-                "Edite suas habilidades (separadas por vírgula):",
-                habilidades.join(", ")
-              );
-
-              if (novas !== null) {
-                const lista = novas
-                  .split(",")
-                  .map((h) => h.trim())
-                  .filter((h) => h !== "");
-
-                setHabilidades(lista);
-                localStorage.setItem("user_habilidades", JSON.stringify(lista));
-              }
-            }}
-            style={{
-              marginTop: 10,
-              background: "#4B2995",
-              color: "#fff",
-              border: "none",
-              padding: "8px 12px",
-              borderRadius: 8,
-              cursor: "pointer",
-            }}
-          >
-            Editar Habilidades
-          </button>
         </div>
+
         <div style={{ marginTop: 40 }}>
-          <h3 style={{ marginBottom: 12 }}>Meus Serviços</h3>
+          <h3 style={{ marginBottom: 12 }}>Serviços postados</h3>
           {meusServicos.length === 0 ? (
-            <p>Você ainda não cadastrou nenhum serviço.</p>
+            <p>Este usuário ainda não cadastrou serviços.</p>
           ) : (
             meusServicos.map((servico) => (
               <div
@@ -513,36 +414,6 @@ const Perfil = () => {
                 <p style={{ margin: "4px 0" }}>
                   <strong>Localização:</strong> {servico.localizacao}
                 </p>
-
-                <div style={{ marginTop: 8 }}>
-                  <button
-                    onClick={() => handleEditar(servico)}
-                    style={{
-                      background: "#4B2995",
-                      color: "white",
-                      border: "none",
-                      borderRadius: 8,
-                      padding: "6px 12px",
-                      cursor: "pointer",
-                      marginRight: 8,
-                    }}
-                  >
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => handleExcluir(servico.id_servico)}
-                    style={{
-                      background: "red",
-                      color: "white",
-                      border: "none",
-                      borderRadius: 8,
-                      padding: "6px 12px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Excluir
-                  </button>
-                </div>
               </div>
             ))
           )}
@@ -550,6 +421,4 @@ const Perfil = () => {
       </div>
     </>
   );
-};
-
-export default Perfil;
+}

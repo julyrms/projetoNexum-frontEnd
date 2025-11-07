@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { useNavigate, Link } from "react-router-dom";
 import { FaBell } from "react-icons/fa";
 import Imagem from "../../../Img/logoheader.png";
-import PerfilImg from "../../../Img/logo.png"; // imagem padrão
+import PerfilImg from "../../../Img/user-icon.png";
 
 const Header = styled.div`
   display: flex;
@@ -312,12 +312,6 @@ export default function CadastroServico() {
 
   const [imagemPerfil, setImagemPerfil] = useState(PerfilImg);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const imgSalva = localStorage.getItem("imagemPerfil");
-    if (imgSalva) setImagemPerfil(imgSalva);
-  }, []);
-
   useEffect(() => {
     const usuario = localStorage.getItem("user_id");
     const nomeUsuario = localStorage.getItem("user_nome");
@@ -355,7 +349,6 @@ export default function CadastroServico() {
       );
       const data = await resposta.json();
       if (resposta.ok) {
-        alert("Serviço cadastrado com sucesso!");
         navigate("/dashboard");
         setForm({
           user_id: "",

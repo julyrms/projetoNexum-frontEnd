@@ -67,7 +67,6 @@ export default function EditarServico() {
       );
 
       if (resposta.ok) {
-        alert("Serviço atualizado com sucesso!");
         navigate("/perfil");
       } else {
         alert("Erro ao atualizar serviço.");
@@ -108,7 +107,7 @@ export default function EditarServico() {
             style={{
               padding: 8,
               borderRadius: 6,
-              border: "1px solid #ccc",
+              border: "3px solid #ccc",
               width: "100%",
             }}
           />
@@ -124,7 +123,7 @@ export default function EditarServico() {
             style={{
               padding: 8,
               borderRadius: 6,
-              border: "1px solid #ccc",
+              border: "3px solid #ccc",
               width: "100%",
               minHeight: 80,
             }}
@@ -142,7 +141,7 @@ export default function EditarServico() {
             style={{
               padding: 8,
               borderRadius: 6,
-              border: "1px solid #ccc",
+              border: "3px solid #ccc",
               width: "100%",
             }}
           />
@@ -159,26 +158,42 @@ export default function EditarServico() {
             style={{
               padding: 8,
               borderRadius: 6,
-              border: "1px solid #ccc",
+              border: "3px solid #ccc",
               width: "100%",
             }}
           />
         </label>
 
-        <label htmlFor="category_id">Categoria</label>
-        <select
-          name="category_id"
-          value={form.category_id}
-          onChange={handleChange}
-          required
-        >
-          <option value="">Selecione uma categoria</option>
-          {categorias.map((cat) => (
-            <option key={cat.id_categoria} value={cat.id_categoria}>
-              {cat.nome}
-            </option>
-          ))}
-        </select>
+        <label htmlFor="category_id" style={{ fontWeight: "bold" }}>
+  Categoria:
+</label>
+
+<select
+  name="category_id"
+  value={form.category_id}
+  onChange={handleChange}
+  required
+  style={{
+    width: "100%",
+    padding: "10px 14px",
+    borderRadius: "12px",
+    border: "3px solid #4B2995",
+    outline: "none",
+    fontSize: "14px",
+    backgroundColor: "#faf7ff",
+    transition: "0.2s",
+    cursor: "pointer",
+  }}
+  onFocus={(e) => (e.target.style.border = "3px solid #6a3bd1")}
+  onBlur={(e) => (e.target.style.border = "3px solid #4B2995")}
+>
+  <option value="">Selecione uma categoria</option>
+  {categorias.map((cat) => (
+    <option key={cat.id_categoria} value={cat.id_categoria}>
+      {cat.nome}
+    </option>
+  ))}
+</select>
         <button
           type="submit"
           style={{
@@ -198,72 +213,3 @@ export default function EditarServico() {
     </div>
   );
 }
-
-// import { useState, useEffect } from "react";
-// import { useParams, useNavigate } from "react-router-dom";
-
-// export default function EditarServico() {
-//   const { id } = useParams();
-//   const navigate = useNavigate();
-//   const [form, setForm] = useState({
-//     nome: "",
-//     descricao: "",
-//     valor: "",
-//     localizacao: "",
-//     category_id: "",
-//   });
-
-//   useEffect(() => {
-//     fetch(`http://localhost:3001/servicos/todosServicos`)
-//       .then((res) => res.json())
-//       .then((data) => {
-//         const servico = data.find((s) => s.id_servico === parseInt(id));
-//         if (servico) setForm(servico);
-//       });
-//   }, [id]);
-
-//   const handleChange = (e) => {
-//     setForm({ ...form, [e.target.name]: e.target.value });
-//   };
-
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-//     const resposta = await fetch(`http://localhost:3001/servicos/atualizarServico/${id}`, {
-//       method: "PUT",
-//       headers: { "Content-Type": "application/json" },
-//       body: JSON.stringify(form),
-//     });
-//     if (resposta.ok) {
-//       alert("Serviço atualizado com sucesso!");
-//       navigate("/perfil");
-//     } else {
-//       alert("Erro ao atualizar serviço.");
-//     }
-//   };
-
-//   return (
-//     <div style={{ padding: 30 }}>
-//       <h2>Editar Serviço</h2>
-//       <form onSubmit={handleSubmit}>
-//         <input name="nome" value={form.nome} onChange={handleChange} />
-//         <input
-//           name="descricao"
-//           value={form.descricao}
-//           onChange={handleChange}
-//         />
-//         <input name="valor" value={form.valor} onChange={handleChange} />
-//         <input
-//           name="localizacao"
-//           value={form.localizacao}
-//           onChange={handleChange}
-//         />
-//         <input
-//           name="category_id"
-//           value={form.category_id}
-//           onChange={handleChange}
-//         />
-//         <button type="submit">Salvar</button>
-//       </form>
-//     </div>
-//   );
-// }

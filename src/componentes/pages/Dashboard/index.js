@@ -4,7 +4,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import styled from "styled-components";
 import { FaBell } from "react-icons/fa";
 import Imagem from "../../../Img/logoheader.png";
-import PerfilPadrao from "../../../Img/logo.png";
+import PerfilPadrao from "../../../Img/user-icon.png";
 import ImageBloco from "../../../Img/imagembloco.png";
 import "../Dashboard/index.css";
 import { Link } from "react-router-dom";
@@ -329,19 +329,6 @@ export default function Dashboard() {
   const [filtroCidade, setFiltroCidade] = useState("");
 
   useEffect(() => {
-    const imagemSalva = localStorage.getItem("imagemPerfil");
-    if (imagemSalva) setImagemPerfil(imagemSalva);
-
-    const atualizarImagem = () => {
-      const novaImagem = localStorage.getItem("imagemPerfil");
-      if (novaImagem) setImagemPerfil(novaImagem);
-    };
-
-    window.addEventListener("storage", atualizarImagem);
-    return () => window.removeEventListener("storage", atualizarImagem);
-  }, []);
-
-  useEffect(() => {
     const carregarServicos = async () => {
       try {
         setLoading(true);
@@ -350,6 +337,7 @@ export default function Dashboard() {
         );
         if (!resposta.ok) throw new Error("Erro ao buscar serviços");
         const dados = await resposta.json();
+        console.log("Serviços recebidos do backend:", dados);
         setServicos(dados);
       } catch (erro) {
         setErro("Erro ao buscar serviços. Verifique o servidor.");
@@ -499,7 +487,7 @@ export default function Dashboard() {
               servicos
                 .filter((servico) => {
                   const textoMatch = servico.nome
-                    .toLowerCase()
+                    ?.toLowerCase()
                     .includes(filtroTexto.toLowerCase());
                   const cidadeMatch = filtroCidade
                     ? servico.localizacao === filtroCidade
@@ -510,7 +498,7 @@ export default function Dashboard() {
                   <Escopo key={servico.id_servico}>
                     <div>
                       <div style={{ fontWeight: "bold", fontSize: "20px" }}>
-                        {servico.nome}
+                        {servico.nome || "Serviço sem nome"}
                       </div>
                       <div
                         style={{
@@ -520,7 +508,21 @@ export default function Dashboard() {
                         }}
                       >
                         Publicado: {formatarData(servico.criacao)} &nbsp;&nbsp;
-                        Postado por: {servico.nome_usuario}
+                        <p>
+                          Publicado por:{" "}
+                          <span
+                            style={{
+                              color: "#4B2995",
+                              cursor: "pointer",
+                              textDecoration: "underline",
+                            }}
+                            onClick={() =>
+                              navigate(`/usuarioPorId/${servico.id_usuario}`)
+                            }
+                          >
+                            {servico.nome_usuario}
+                          </span>
+                        </p>
                       </div>
                       <div
                         style={{
@@ -533,8 +535,7 @@ export default function Dashboard() {
                           marginTop: "-36px",
                         }}
                       >
-                        R$
-                        {Number(servico.valor).toFixed(2).replace(".", ",")}
+                        R$ {Number(servico.valor).toFixed(2).replace(".", ",")}
                       </div>
                       <div
                         style={{
@@ -563,8 +564,6 @@ export default function Dashboard() {
                         >
                           Enviar proposta
                         </BotaoX>
-
-                        {/* <BotaoX>Enviar proposta</BotaoX> */}
                         <span
                           style={{
                             fontSize: "14px",

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
-// import Foto from '../../../Img/imagemfundo.jpg';
+
 
 const Moldura = styled.div`
   border: 4px solid white;
@@ -62,6 +62,8 @@ export default function Cadastrar() {
   const [celular, setCelular] = useState("");
   const [senha, setSenha] = useState("");
   const [confSenha, setConfSenha] = useState("");
+  const [habilidades, setHabilidades] = useState("");
+
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -81,12 +83,20 @@ export default function Cadastrar() {
     setLoading(true);
 
     try {
-      const resposta = await fetch('http://localhost:3001/usuarios/criarUsuario',{
+      const resposta = await fetch(
+        "http://localhost:3001/usuarios/criarUsuario",
+        {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ nome, celular, senha, email  }),
+          body: JSON.stringify({
+            nome,
+            celular,
+            senha,
+            email,
+            habilidades: habilidades.split(",").map((h) => h.trim()),
+          }),
         }
       );
 
@@ -94,8 +104,7 @@ export default function Cadastrar() {
       console.log(dados);
 
       if (resposta.ok) {
-        alert("Cadastro realizado com sucesso!");
-        navigate("/");
+        navigate("/login");
       } else {
         setErro(
           dados.detalhe || "Erro ao realizar o cadastro. Tente novamente."
@@ -115,7 +124,7 @@ export default function Cadastrar() {
         <div className="row justify-content-center mt-5 text-center">
           <Moldura>
             <Fonte>
-              <h1>CADASTRO</h1>
+              <h1>Cadastro</h1>
             </Fonte>
             <form onSubmit={exeSubmit}>
               <div className="mb-3">
@@ -153,7 +162,6 @@ export default function Cadastrar() {
                   required
                 />
               </div>
-
 
               <div className="mb-3">
                 <Fonte2>
@@ -206,6 +214,22 @@ export default function Cadastrar() {
                   value={confSenha}
                   onChange={(e) => setConfSenha(e.target.value)}
                   required
+                />
+              </div>
+              <div className="mb-3">
+                <Fonte2>
+                  <label htmlFor="habilidades" className="form-label">
+                    Habilidades (separe por vírgulas)
+                  </label>
+                </Fonte2>
+                <input
+                  type="text"
+                  className="form-control"
+                  id="habilidades"
+                  name="habilidades"
+                  placeholder="Ex: Jardinagem, Limpeza, Manutenção"
+                  value={habilidades}
+                  onChange={(e) => setHabilidades(e.target.value)}
                 />
               </div>
 

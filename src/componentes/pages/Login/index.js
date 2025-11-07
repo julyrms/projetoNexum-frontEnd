@@ -91,11 +91,15 @@ export default function Login() {
       const data = await resposta.json();
 
       if (resposta.ok) {
-        alert("Login bem-sucedido");
         console.log("Dados da API", data);
         localStorage.setItem("user_id", data.usuario.id);
         localStorage.setItem("user_nome", data.usuario.nome);
         localStorage.setItem("user_email", data.usuario.email);
+        localStorage.setItem(
+          "user_habilidades",
+          data.usuario.habilidades || ""
+        );
+
         navigate("/dashboard");
       } else {
         setError(data.erro || "Erro ao fazer o Login. Tente novamente");
