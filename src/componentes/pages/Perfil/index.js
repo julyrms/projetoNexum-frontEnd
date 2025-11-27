@@ -247,21 +247,16 @@ const Perfil = () => {
 
   const [meusServicos, setMeusServicos] = useState([]);
   const userId = localStorage.getItem("user_id");
-
   useEffect(() => {
     const habs = localStorage.getItem("user_habilidades");
 
     if (habs) {
-      const lista = habs
-        .replace("{", "")
-        .replace("}", "")
-        .replace("[", "")
-        .replace("]", "")
-        .split(",")
-        .map((h) => h.replace(/"/g, "").trim())
-        .filter((h) => h.length > 0);
-
-      setHabilidades(lista);
+      try {
+        setHabilidades(JSON.parse(habs));
+      } catch (err) {
+        console.error("Erro ao carregar habilidades:", err);
+        setHabilidades([]);
+      }
     }
   }, []);
 

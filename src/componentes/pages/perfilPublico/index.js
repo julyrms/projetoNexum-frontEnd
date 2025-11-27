@@ -197,7 +197,7 @@ const Notificacoes = () => {
   );
 };
 
-export default function Perfil() {
+export default function PerfilPublico() {
   const navigate = useNavigate();
   const { id } = useParams();
   const [usuario, setUsuario] = useState(null);
@@ -211,31 +211,31 @@ export default function Perfil() {
         const resUsuario = await fetch(
           `http://localhost:3001/usuarios/usuarioPorId/${id}`
         );
-        const dataUsuario = await resUsuario.json();
-        setUsuario(dataUsuario);
+
+        let dataUsuario = await resUsuario.json();
+
+        // TRATA O RETORNO COMO ARRAY OU OBJETO
+        const usuarioCorrigido = Array.isArray(dataUsuario)
+          ? dataUsuario[0]
+          : dataUsuario;
+
+        setUsuario(usuarioCorrigido);
+        setHabilidades(usuarioCorrigido.habilidades || []);
 
         const resServicos = await fetch(
           `http://localhost:3001/servicos/usuarioServicos/${id}`
         );
-        const dataServicos = await resServicos.json();
-        setMeusServicos(dataServicos);
 
-        const habs = localStorage.getItem("user_habilidades");
-        if (habs) {
-          const lista = habs
-            .replace("{", "")
-            .replace("}", "")
-            .replace("[", "")
-            .replace("]", "")
-            .split(",")
-            .map((h) => h.replace(/"/g, "").trim())
-            .filter((h) => h.length > 0);
-          setHabilidades(lista);
-        }
+        let dataServicos = await resServicos.json();
+        console.log("RETORNO DA API SERVICOS:", dataServicos);
+
+        // TRATA SERVICOS
+        setMeusServicos(Array.isArray(dataServicos) ? dataServicos : []);
       } catch (err) {
         console.error("Erro ao buscar perfil:", err);
       }
     };
+
     fetchPerfil();
   }, [id]);
 

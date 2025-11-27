@@ -92,12 +92,17 @@ export default function Login() {
 
       if (resposta.ok) {
         console.log("Dados da API", data);
+        console.log("HABILIDADES:", data.usuario.habilidades);
+        console.log("DATA:", data);
+        console.log("USUARIO:", data.usuario);
+        console.log("JSON COMPLETO DA API:", JSON.stringify(data, null, 2));
+
         localStorage.setItem("user_id", data.usuario.id);
         localStorage.setItem("user_nome", data.usuario.nome);
         localStorage.setItem("user_email", data.usuario.email);
         localStorage.setItem(
           "user_habilidades",
-          data.usuario.habilidades || ""
+          JSON.stringify(data.usuario.habilidades || [])
         );
 
         navigate("/dashboard");

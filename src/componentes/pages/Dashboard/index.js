@@ -517,7 +517,7 @@ export default function Dashboard() {
                               textDecoration: "underline",
                             }}
                             onClick={() =>
-                              navigate(`/usuarioPorId/${servico.id_usuario}`)
+                              navigate(`/usuarioPorId/${servico.user_id}`)
                             }
                           >
                             {servico.nome_usuario}
