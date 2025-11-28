@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import styled from "styled-components";
 import { FaBell } from "react-icons/fa";
+import { FaSignOutAlt } from "react-icons/fa";
 import Imagem from "../../../Img/logoheader.png";
 import PerfilPadrao from "../../../Img/user-icon.png";
 import ImageBloco from "../../../Img/imagembloco.png";
@@ -382,6 +383,7 @@ export default function Dashboard() {
           Cadastro de serviço
         </Link>
 
+        {/* Ícones do canto direito */}
         <div
           style={{
             marginLeft: "auto",
@@ -392,6 +394,21 @@ export default function Dashboard() {
           }}
         >
           <Notificacoes />
+
+          {/* Botão de logout */}
+          <FaSignOutAlt
+            title="Sair"
+            onClick={() => (window.location.href = "http://localhost:3000")}
+            style={{
+              fontSize: "22px",
+              color: "#4B2995",
+              cursor: "pointer",
+              transition: "0.2s",
+            }}
+            onMouseEnter={(e) => (e.target.style.color = "#7B61FF")}
+            onMouseLeave={(e) => (e.target.style.color = "#4B2995")}
+          />
+
           <Imagemnike
             src={imagemPerfil}
             alt="Foto do perfil"

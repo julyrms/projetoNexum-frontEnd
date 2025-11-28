@@ -5,6 +5,8 @@ import { useNavigate, Link } from "react-router-dom";
 import Imagem from "../../../Img/logoheader.png";
 import PerfilImg from "../../../Img/user-icon.png";
 
+
+
 const Header = styled.div`
   display: flex;
   justify-content: space-between;
@@ -244,7 +246,9 @@ const Perfil = () => {
   const [imagemPerfil, setImagemPerfil] = useState(PerfilImg);
   const inputFileRef = useRef(null);
   const inputHabilidadeRef = useRef(null);
-
+  const [hover, setHover] = useState(false);
+  const [hoverEditar, setHoverEditar] = useState(null);
+ const [hoverExcluir, setHoverExcluir] = useState(null);
   const [meusServicos, setMeusServicos] = useState([]);
   const userId = localStorage.getItem("user_id");
   useEffect(() => {
@@ -512,27 +516,35 @@ const Perfil = () => {
                 <div style={{ marginTop: 8 }}>
                   <button
                     onClick={() => handleEditar(servico)}
+                    onMouseEnter={() => setHoverEditar(servico.id_servico)}
+                    onMouseLeave={() => setHoverEditar(null)}
                     style={{
-                      background: "#4B2995",
-                      color: "white",
-                      border: "none",
+                      background: hoverEditar === servico.id_servico ? "#4B2995" : "white",
+                      color: hoverEditar === servico.id_servico ? "white" : "#4B2995",
+                      border: "1px solid #4B2995",
                       borderRadius: 8,
                       padding: "6px 12px",
                       cursor: "pointer",
                       marginRight: 8,
+                      transition: "0.2s"
                     }}
                   >
                     Editar
                   </button>
+
                   <button
                     onClick={() => handleExcluir(servico.id_servico)}
+                    onMouseEnter={() => setHover(true)}
+                    onMouseLeave={() => setHover(false)}
                     style={{
-                      background: "red",
-                      color: "white",
-                      border: "none",
+                      background: hover ? "#4B2995" : "white",
+                      color: hover ? "white" : "#4B2995",
+                      border: "1px solid #4B2995",
                       borderRadius: 8,
                       padding: "6px 12px",
-                      cursor: "pointer",
+                      borderColor: "#4B2995",
+                      transition: "0.2s"
+                      
                     }}
                   >
                     Excluir
