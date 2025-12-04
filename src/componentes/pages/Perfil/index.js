@@ -5,8 +5,6 @@ import { useNavigate, Link } from "react-router-dom";
 import Imagem from "../../../Img/logoheader.png";
 import PerfilImg from "../../../Img/user-icon.png";
 
-
-
 const Header = styled.div`
   display: flex;
   justify-content: space-between;
@@ -248,7 +246,7 @@ const Perfil = () => {
   const inputHabilidadeRef = useRef(null);
   const [hover, setHover] = useState(false);
   const [hoverEditar, setHoverEditar] = useState(null);
- const [hoverExcluir, setHoverExcluir] = useState(null);
+  const [hoverExcluir, setHoverExcluir] = useState(null);
   const [meusServicos, setMeusServicos] = useState([]);
   const userId = localStorage.getItem("user_id");
   useEffect(() => {
@@ -456,35 +454,6 @@ const Perfil = () => {
               ))}
             </div>
           )}
-          <button
-            onClick={() => {
-              const novas = prompt(
-                "Edite suas habilidades (separadas por vírgula):",
-                habilidades.join(", ")
-              );
-
-              if (novas !== null) {
-                const lista = novas
-                  .split(",")
-                  .map((h) => h.trim())
-                  .filter((h) => h !== "");
-
-                setHabilidades(lista);
-                localStorage.setItem("user_habilidades", JSON.stringify(lista));
-              }
-            }}
-            style={{
-              marginTop: 10,
-              background: "#4B2995",
-              color: "#fff",
-              border: "none",
-              padding: "8px 12px",
-              borderRadius: 8,
-              cursor: "pointer",
-            }}
-          >
-            Editar Habilidades
-          </button>
         </div>
         <div style={{ marginTop: 40 }}>
           <h3 style={{ marginBottom: 12 }}>Meus Serviços</h3>
@@ -519,14 +488,20 @@ const Perfil = () => {
                     onMouseEnter={() => setHoverEditar(servico.id_servico)}
                     onMouseLeave={() => setHoverEditar(null)}
                     style={{
-                      background: hoverEditar === servico.id_servico ? "#4B2995" : "white",
-                      color: hoverEditar === servico.id_servico ? "white" : "#4B2995",
+                      background:
+                        hoverEditar === servico.id_servico
+                          ? "#4B2995"
+                          : "white",
+                      color:
+                        hoverEditar === servico.id_servico
+                          ? "white"
+                          : "#4B2995",
                       border: "1px solid #4B2995",
                       borderRadius: 8,
                       padding: "6px 12px",
                       cursor: "pointer",
                       marginRight: 8,
-                      transition: "0.2s"
+                      transition: "0.2s",
                     }}
                   >
                     Editar
@@ -543,8 +518,7 @@ const Perfil = () => {
                       borderRadius: 8,
                       padding: "6px 12px",
                       borderColor: "#4B2995",
-                      transition: "0.2s"
-                      
+                      transition: "0.2s",
                     }}
                   >
                     Excluir
